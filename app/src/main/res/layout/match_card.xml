@@ -1,0 +1,166 @@
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_height="match_parent"
+    android:layout_width="match_parent"
+    android:orientation="vertical" >
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/match_card_vertical_margin"
+        android:layout_marginBottom="@dimen/match_card_time_bottom_margin">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/matchCardTime"
+            android:textSize="12sp"
+            android:layout_marginRight="@dimen/match_card_time_margin_right" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toRightOf="@id/matchCardTime"
+            android:id="@+id/matchCardAdditionalInfo"
+            android:textSize="12sp"
+            android:textColor="#d12121" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:paddingRight="@dimen/match_card_event_name_margin_right"
+            android:id="@+id/matchCardEvent"
+            android:textSize="12sp" />
+
+    </RelativeLayout>
+
+    <android.support.v7.widget.CardView
+        xmlns:card_view="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/card_view"
+        android:layout_gravity="center"
+        android:layout_width="match_parent"
+        android:layout_height="120dp"
+        android:alpha="1.0"
+        card_view:cardBackgroundColor="#bbb"
+        card_view:cardCornerRadius="4dp">
+
+        <ImageView
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:id="@+id/matchCardEventBackground"
+            android:scaleType="fitEnd" />
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:orientation="horizontal">
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
+            <android.support.v7.widget.CardView
+                xmlns:card_view="http://schemas.android.com/apk/res-auto"
+                android:layout_gravity="center"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="5"
+                card_view:cardBackgroundColor="#88bbbbbb"
+                card_view:cardCornerRadius="10dp">
+
+                <RelativeLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerHorizontal="true"
+                        android:id="@+id/matchCardTeamOneName"
+                        android:textStyle="bold"
+                        android:textSize="16sp" />
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@id/matchCardTeamOneName"
+                        android:layout_centerHorizontal="true"
+                        android:id="@+id/matchCardTeamOneImage" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerHorizontal="true"
+                        android:layout_below="@id/matchCardTeamOneImage"
+                        android:id="@+id/matchCardTeamOnePercentage"
+                        android:textStyle="italic"
+                        android:textSize="16sp" />
+
+                </RelativeLayout>
+
+            </android.support.v7.widget.CardView>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_gravity="center_vertical"
+                android:gravity="center_horizontal"
+                android:text="vs"
+                android:textSize="16sp" />
+
+            <android.support.v7.widget.CardView
+                xmlns:card_view="http://schemas.android.com/apk/res-auto"
+                android:layout_gravity="center_vertical"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="5"
+                card_view:cardBackgroundColor="#bbbbbbbb"
+                card_view:cardCornerRadius="10dp">
+
+                <RelativeLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerHorizontal="true"
+                        android:id="@+id/matchCardTeamTwoName"
+                        android:textStyle="bold"
+                        android:textSize="16sp" />
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerHorizontal="true"
+                        android:layout_below="@id/matchCardTeamTwoName"
+                        android:id="@+id/matchCardTeamTwoImage" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerHorizontal="true"
+                        android:layout_below="@id/matchCardTeamTwoImage"
+                        android:id="@+id/matchCardTeamTwoPercentage"
+                        android:textStyle="italic"
+                        android:textSize="16sp" />
+
+                </RelativeLayout>
+
+            </android.support.v7.widget.CardView>
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
+        </LinearLayout>
+
+    </android.support.v7.widget.CardView>
+
+</LinearLayout>
