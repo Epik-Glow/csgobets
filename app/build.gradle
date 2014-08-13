@@ -6,7 +6,7 @@ android {
 
     defaultConfig {
         applicationId "com.davenwu.csgobets"
-        minSdkVersion 14
+        minSdkVersion 7
         targetSdkVersion 20
         versionCode 3
         versionName "1.1"
