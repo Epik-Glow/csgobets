@@ -1,12 +1,14 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    tools:context=".MainActivity" >
-    <item android:id="@+id/action_refresh"
+    xmlns:csgobets="http://schemas.android.com/apk/res-auto" >
+    <item
+        android:id="@+id/action_refresh"
         android:title="Refresh"
         android:icon="@drawable/ic_action_refresh"
-        android:showAsAction="always" />
-    <item android:id="@+id/action_settings"
-        android:title="@string/action_settings"
-        android:orderInCategory="100"
-        android:showAsAction="never" />
+        android:showAsAction="always"
+        csgobets:showAsAction="always"/>
+    <item
+        android:id="@+id/action_open_csgolounge"
+        android:title="Open CSGOLounge"
+        android:showAsAction="never"
+        csgobets:showAsAction="never" />
 </menu>

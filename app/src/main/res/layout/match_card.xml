@@ -7,29 +7,30 @@
     <RelativeLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/match_card_vertical_margin"
-        android:layout_marginBottom="@dimen/match_card_time_bottom_margin">
+        android:layout_marginTop="@dimen/match_card_top_margin"
+        android:layout_marginBottom="@dimen/match_card_bottom_margin">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginRight="@dimen/match_card_time_margin_right"
             android:id="@+id/matchCardTime"
-            android:textSize="12sp"
-            android:layout_marginRight="@dimen/match_card_time_margin_right" />
+            android:textSize="12sp" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_toRightOf="@id/matchCardTime"
+            android:layout_alignParentBottom="true"
             android:id="@+id/matchCardAdditionalInfo"
-            android:textSize="12sp"
+            android:textSize="10sp"
             android:textColor="#d12121" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentRight="true"
-            android:paddingRight="@dimen/match_card_event_name_margin_right"
+            android:layout_marginRight="@dimen/match_card_event_name_margin_right"
             android:id="@+id/matchCardEvent"
             android:textSize="12sp" />
 
@@ -37,7 +38,7 @@
 
     <android.support.v7.widget.CardView
         xmlns:card_view="http://schemas.android.com/apk/res-auto"
-        android:id="@+id/card_view"
+        android:id="@+id/matchCardMainCard"
         android:layout_gravity="center"
         android:layout_width="match_parent"
         android:layout_height="120dp"
@@ -71,7 +72,7 @@
                 card_view:cardCornerRadius="10dp">
 
                 <RelativeLayout
-                    android:layout_width="wrap_content"
+                    android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center">
 
@@ -84,11 +85,22 @@
                         android:textSize="16sp" />
 
                     <ImageView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:layout_width="60dp"
+                        android:layout_height="50dp"
                         android:layout_below="@id/matchCardTeamOneName"
                         android:layout_centerHorizontal="true"
                         android:id="@+id/matchCardTeamOneImage" />
+
+                    <ImageView
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:layout_alignTop="@id/matchCardTeamOneImage"
+                        android:layout_alignLeft="@id/matchCardTeamOneImage"
+                        android:layout_marginTop="@dimen/match_card_win_vertical_margin"
+                        android:layout_marginLeft="@dimen/match_card_win_horizontal_margin"
+                        android:visibility="invisible"
+                        android:id="@+id/matchCardTeamOneWin"
+                        android:src="@drawable/win" />
 
                     <TextView
                         android:layout_width="wrap_content"
@@ -103,14 +115,23 @@
 
             </android.support.v7.widget.CardView>
 
-            <TextView
-                android:layout_width="wrap_content"
+            <android.support.v7.widget.CardView
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_gravity="center"
                 android:layout_weight="1"
-                android:layout_gravity="center_vertical"
-                android:gravity="center_horizontal"
-                android:text="vs"
-                android:textSize="16sp" />
+                card_view:cardBackgroundColor="#88bbbbbb"
+                card_view:cardCornerRadius="4dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_gravity="center"
+                    android:text="vs"
+                    android:textSize="16sp" />
+
+            </android.support.v7.widget.CardView>
 
             <android.support.v7.widget.CardView
                 xmlns:card_view="http://schemas.android.com/apk/res-auto"
@@ -122,7 +143,7 @@
                 card_view:cardCornerRadius="10dp">
 
                 <RelativeLayout
-                    android:layout_width="wrap_content"
+                    android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center">
 
@@ -135,11 +156,24 @@
                         android:textSize="16sp" />
 
                     <ImageView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:layout_width="60dp"
+                        android:layout_height="50dp"
                         android:layout_centerHorizontal="true"
                         android:layout_below="@id/matchCardTeamTwoName"
+                        android:layout_marginTop="@dimen/match_card_team_vertical_margin"
+                        android:layout_marginBottom="@dimen/match_card_team_vertical_margin"
                         android:id="@+id/matchCardTeamTwoImage" />
+
+                    <ImageView
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:layout_alignTop="@id/matchCardTeamTwoImage"
+                        android:layout_alignRight="@id/matchCardTeamTwoImage"
+                        android:layout_marginTop="@dimen/match_card_win_vertical_margin"
+                        android:layout_marginRight="@dimen/match_card_win_horizontal_margin"
+                        android:visibility="invisible"
+                        android:id="@+id/matchCardTeamTwoWin"
+                        android:src="@drawable/win" />
 
                     <TextView
                         android:layout_width="wrap_content"

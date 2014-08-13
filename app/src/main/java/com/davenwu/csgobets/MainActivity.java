@@ -1,16 +1,21 @@
 package com.davenwu.csgobets;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import org.jsoup.Jsoup;
@@ -21,17 +26,20 @@ import org.jsoup.select.Elements;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.ArrayList;
 
 public class MainActivity extends Activity {
     public static final String MATCH_URL = "com.davenwu.csgobets.MATCHURL";
-
-    private LinearLayout matchesList;
+    private ArrayList<Match> matchesArrayList;
+    private MatchAdapter matchAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        matchesList = (LinearLayout) findViewById(R.id.matchesListView);
+        matchesArrayList = new ArrayList<Match>();
+        matchAdapter = new MatchAdapter(this, matchesArrayList);
+        ((ListView) findViewById(R.id.matchesList)).setAdapter(matchAdapter);
         checkMatches();
     }
 
@@ -48,24 +56,86 @@ public class MainActivity extends Activity {
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            return true;
-        } else if(id == R.id.action_refresh) {
+        if(id == R.id.action_refresh) {
             checkMatches();
+        } else if(id == R.id.action_open_csgolounge) {
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://csgolounge.com"));
+            startActivity(intent);
         }
         return super.onOptionsItemSelected(item);
     }
 
     public void checkMatches() {
-        matchesList.removeAllViews();
+        matchesArrayList.clear();
+        matchAdapter.notifyDataSetChanged();
         findViewById(R.id.matchesProgressBar).setVisibility(View.VISIBLE);
         new CheckMatchesTask().execute();
     }
 
+    private class MatchAdapter extends ArrayAdapter<Match> {
+        private Context context;
+        private ArrayList<Match> matches;
+
+        public MatchAdapter(Context context, ArrayList<Match> matches) {
+            super(context, R.layout.match_card, matches);
+            this.context = context;
+            this.matches = matches;
+        }
+
+        @Override
+        public View getView(final int position, View convertView, ViewGroup parent) {
+            LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            View matchCard = inflater.inflate(R.layout.match_card, parent, false);
+            TextView matchCardTime = (TextView) matchCard.findViewById(R.id.matchCardTime);
+            TextView matchCardAdditionalInfo = (TextView) matchCard.findViewById(R.id.matchCardAdditionalInfo);
+            TextView matchCardEvent = (TextView) matchCard.findViewById(R.id.matchCardEvent);
+            TextView matchCardTeamOneName = (TextView) matchCard.findViewById(R.id.matchCardTeamOneName);
+            TextView matchCardTeamOnePercentage = (TextView) matchCard.findViewById(R.id.matchCardTeamOnePercentage);
+            TextView matchCardTeamTwoName = (TextView) matchCard.findViewById(R.id.matchCardTeamTwoName);
+            TextView matchCardTeamTwoPercentage = (TextView) matchCard.findViewById(R.id.matchCardTeamTwoPercentage);
+            ImageView matchCardEventBackground = (ImageView) matchCard.findViewById(R.id.matchCardEventBackground);
+            ImageView matchCardTeamOneImage = (ImageView) matchCard.findViewById(R.id.matchCardTeamOneImage);
+            ImageView matchCardTeamTwoImage = (ImageView) matchCard.findViewById(R.id.matchCardTeamTwoImage);
+            ImageView matchCardTeamOneWin = (ImageView) matchCard.findViewById(R.id.matchCardTeamOneWin);
+            ImageView matchCardTeamTwoWin = (ImageView) matchCard.findViewById(R.id.matchCardTeamTwoWin);
+
+            matchCardTime.setText(matches.get(position).getTime());
+            matchCardAdditionalInfo.setText(matches.get(position).getAdditionalInfo());
+            matchCardEvent.setText(matches.get(position).getEvent());
+            matchCardTeamOneName.setText(matches.get(position).getTeamOneName());
+            matchCardTeamOnePercentage.setText(matches.get(position).getTeamOnePercentage());
+            matchCardTeamTwoName.setText(matches.get(position).getTeamTwoName());
+            matchCardTeamTwoPercentage.setText(matches.get(position).getTeamTwoPercentage());
+            matchCardEventBackground.setImageBitmap(matches.get(position).getEventBackground());
+            matchCardTeamOneImage.setImageBitmap(matches.get(position).getTeamOneImage());
+            matchCardTeamTwoImage.setImageBitmap(matches.get(position).getTeamTwoImage());
+
+            if(matches.get(position).isMatchOver()) {
+                matchCard.findViewById(R.id.matchCardMainCard).setAlpha(0.5f);
+            }
+            if(matches.get(position).isTeamOneWin()) {
+                matchCardTeamOneWin.setVisibility(View.VISIBLE);
+            }
+            if(matches.get(position).isTeamTwoWin()) {
+                matchCardTeamTwoWin.setVisibility(View.VISIBLE);
+            }
+
+            matchCard.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Intent intent = new Intent(view.getContext(), MatchDetailsActivity.class);
+                    intent.putExtra(MainActivity.MATCH_URL, matches.get(position).getMatchUrl());
+                    startActivity(intent);
+                }
+            });
+
+            return matchCard;
+        }
+    }
+
     private class CheckMatchesTask extends AsyncTask<Void, Void, Void> {
         Document doc;
-        Elements matches;
-        String time, additionalInfo, event, teamOneName, teamTwoName, teamOnePercentage, teamTwoPercentage, matchUrl;
+        Elements matchesElement;
 
         @Override
         protected Void doInBackground(Void... voids) {
@@ -79,57 +149,37 @@ public class MainActivity extends Activity {
 
         @Override
         protected void onPostExecute(Void v) {
-            matches = doc.getElementById("bets").children();
+            matchesElement = doc.getElementById("bets").children();
             findViewById(R.id.matchesProgressBar).setVisibility(View.INVISIBLE);
-            for(Element element : matches) {
-                View matchCard = getLayoutInflater().inflate(R.layout.match_card, null);
-                TextView matchCardTime = (TextView) matchCard.findViewById(R.id.matchCardTime);
-                TextView matchCardAdditionalInfo = (TextView) matchCard.findViewById(R.id.matchCardAdditionalInfo);
-                TextView matchCardEvent = (TextView) matchCard.findViewById(R.id.matchCardEvent);
-                TextView matchCardTeamOneName = (TextView) matchCard.findViewById(R.id.matchCardTeamOneName);
-                TextView matchCardTeamOnePercentage = (TextView) matchCard.findViewById(R.id.matchCardTeamOnePercentage);
-                TextView matchCardTeamTwoName = (TextView) matchCard.findViewById(R.id.matchCardTeamTwoName);
-                TextView matchCardTeamTwoPercentage = (TextView) matchCard.findViewById(R.id.matchCardTeamTwoPercentage);
+            for(Element element : matchesElement) {
+                Match match = new Match();
 
-                time = element.select(".matchheader").select(".whenm").get(0).ownText();
-                additionalInfo = element.select(".matchheader").select(".whenm").select("span").text();
-                event = element.select(".matchheader").select(".whenm").get(1).ownText();
-                teamOneName = element.select(".match").select(".matchleft").select("a").select("div").select("div").get(2).select(".teamtext").select("b").text();
-                teamOnePercentage = element.select(".match").select(".matchleft").select("a").select("div").get(2).select(".teamtext").select("i").first().ownText();
-                teamTwoName = element.select(".match").select(".matchleft").select("a").select("div").get(6).select(".teamtext").select("b").text();
-                teamTwoPercentage = element.select(".match").select(".matchleft").select("a").select("div").get(6).select(".teamtext").select("i").first().ownText();
-                matchUrl = element.select(".match").select(".matchleft").select("a").attr("href");
+                match.setTime(element.select(".matchheader").select(".whenm").get(0).ownText());
+                match.setAdditionalInfo(element.select(".matchheader").select(".whenm").select("span").text());
+                match.setEvent(element.select(".matchheader").select(".whenm").get(1).ownText());
+                match.setTeamOneName(element.select(".match").select(".matchleft").select("a").select("div").select("div").get(2).select(".teamtext").select("b").text());
+                match.setTeamOnePercentage(element.select(".match").select(".matchleft").select("a").select("div").get(2).select(".teamtext").select("i").first().ownText());
+                match.setTeamTwoName(element.select(".match").select(".matchleft").select("a").select("div").get(6).select(".teamtext").select("b").text());
+                match.setTeamTwoPercentage(element.select(".match").select(".matchleft").select("a").select("div").get(6).select(".teamtext").select("i").first().ownText());
+                match.setMatchUrl(element.select(".match").select(".matchleft").select("a").attr("href"));
+                match.setMatchOver(element.select(".match").hasClass("notaviable"));
+                match.setTeamOneWin(!element.select(".team").get(0).select("img").isEmpty());
+                match.setTeamTwoWin(!element.select(".team").get(1).select("img").isEmpty());
 
-                matchCardTime.setText(time);
-                matchCardAdditionalInfo.setText(additionalInfo);
-                matchCardEvent.setText(event);
-                matchCardTeamOneName.setText(teamOneName);
-                matchCardTeamOnePercentage.setText(teamOnePercentage);
-                matchCardTeamTwoName.setText(teamTwoName);
-                matchCardTeamTwoPercentage.setText(teamTwoPercentage);
+                new DownloadTeamImagesTask(match).execute(element);
 
-                new DownloadTeamImagesTask(matchCard).execute(element);
-
-                matchCard.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        Intent intent = new Intent(view.getContext(), MatchDetailsActivity.class);
-                        intent.putExtra(MainActivity.MATCH_URL, matchUrl);
-                        startActivity(intent);
-                    }
-                });
-
-                matchesList.addView(matchCard);
+                matchAdapter.add(match);
+                matchAdapter.notifyDataSetChanged();
             }
         }
     }
 
     private class DownloadTeamImagesTask extends AsyncTask<Element, Void, Void> {
-        View matchCard;
+        Match match;
         Bitmap eventBackground, teamOneImage, teamTwoImage;
 
-        public DownloadTeamImagesTask(View matchCard) {
-            this.matchCard = matchCard;
+        public DownloadTeamImagesTask(Match match) {
+            this.match = match;
         }
 
         @Override
@@ -155,13 +205,10 @@ public class MainActivity extends Activity {
 
         @Override
         protected void onPostExecute(Void v) {
-            ImageView matchCardEventBackground = (ImageView) matchCard.findViewById(R.id.matchCardEventBackground);
-            ImageView matchCardTeamOneImage = (ImageView) matchCard.findViewById(R.id.matchCardTeamOneImage);
-            ImageView matchCardTeamTwoImage = (ImageView) matchCard.findViewById(R.id.matchCardTeamTwoImage);
-
-            matchCardEventBackground.setImageBitmap(eventBackground);
-            matchCardTeamOneImage.setImageBitmap(teamOneImage);
-            matchCardTeamTwoImage.setImageBitmap(teamTwoImage);
+            match.setEventBackground(eventBackground);
+            match.setTeamOneImage(teamOneImage);
+            match.setTeamTwoImage(teamTwoImage);
+            matchAdapter.notifyDataSetChanged();
         }
 
         private Bitmap getBitmap(String url) throws IOException {
