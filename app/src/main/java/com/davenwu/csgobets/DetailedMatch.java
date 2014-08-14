@@ -103,4 +103,5 @@ public class DetailedMatch {
     public void setTeamTwoImage(Bitmap teamTwoImage) {
         this.teamTwoImage = teamTwoImage;
     }
+
 }

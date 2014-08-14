@@ -28,7 +28,7 @@ import java.net.URL;
 public class MatchDetailsActivity extends ActionBarActivity {
     private String matchUrl;
     private DetailedMatch match;
-    private RetainFragment dataFragment;
+    private DetailedMatchRetainFragment dataFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,10 +39,10 @@ public class MatchDetailsActivity extends ActionBarActivity {
         matchUrl = "http://csgolounge.com/" + getIntent().getStringExtra(MainActivity.MATCH_URL);
 
         FragmentManager fm = getSupportFragmentManager();
-        dataFragment = (RetainFragment) fm.findFragmentByTag("data");
+        dataFragment = (DetailedMatchRetainFragment) fm.findFragmentByTag("data");
 
         if(dataFragment == null) {
-            dataFragment = new RetainFragment();
+            dataFragment = new DetailedMatchRetainFragment();
             fm.beginTransaction().add(dataFragment, "data").commit();
 
             match = new DetailedMatch();
@@ -94,6 +94,7 @@ public class MatchDetailsActivity extends ActionBarActivity {
         TextView matchDetailsTeamTwoPotentialReward = (TextView) matchDetailsCard.findViewById(R.id.matchDetailsTeamTwoPotentialReward);
         ImageView matchDetailsTeamOneImage = (ImageView) findViewById(R.id.matchDetailsTeamOneImage);
         ImageView matchDetailsTeamTwoImage = (ImageView) findViewById(R.id.matchDetailsTeamTwoImage);
+        Button streamButton = (Button) findViewById(R.id.matchDetailsStreamButton);
 
         matchDetailsApproximateTime.setText(detailedMatch.getApproximateTime());
         matchDetailsBestOf.setText(detailedMatch.getBestOf());
@@ -108,7 +109,7 @@ public class MatchDetailsActivity extends ActionBarActivity {
         matchDetailsTeamTwoImage.setImageBitmap(detailedMatch.getTeamTwoImage());
 
         if(detailedMatch.getStreamUrl() != null) {
-            Button streamButton = (Button) findViewById(R.id.matchDetailsStreamButton);
+            streamButton.setText("Twitch Stream Available!");
             streamButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
@@ -116,12 +117,15 @@ public class MatchDetailsActivity extends ActionBarActivity {
                     startActivity(intent);
                 }
             });
-            streamButton.setVisibility(View.VISIBLE);
-            findViewById(R.id.matchDetailsProgressBar).setVisibility(View.INVISIBLE);
+        } else {
+            streamButton.setText("No Twitch Streams");
+            streamButton.setEnabled(false);
+            streamButton.setClickable(false);
         }
 
         findViewById(R.id.matchDetailsProgressBar).setVisibility(View.INVISIBLE);
         matchDetailsCard.setVisibility(View.VISIBLE);
+        streamButton.setVisibility(View.VISIBLE);
     }
 
     private void refresh() {
@@ -276,11 +280,10 @@ public class MatchDetailsActivity extends ActionBarActivity {
             }
 
             streamButton.setVisibility(View.VISIBLE);
-            findViewById(R.id.matchDetailsProgressBar).setVisibility(View.INVISIBLE);
         }
     }
 
-    private class RetainFragment extends Fragment {
+    public static class DetailedMatchRetainFragment extends Fragment {
         private DetailedMatch match;
 
         @Override

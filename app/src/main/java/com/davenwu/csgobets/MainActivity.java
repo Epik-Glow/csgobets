@@ -36,7 +36,7 @@ public class MainActivity extends ActionBarActivity {
     public static final String MATCH_URL = "com.davenwu.csgobets.MATCHURL";
     private ArrayList<MainMatch> matchesArrayList;
     private MatchesAdapter matchAdapter;
-    private RetainedFragment dataFragment;
+    private MatchesRetainedFragment dataFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,10 +45,10 @@ public class MainActivity extends ActionBarActivity {
 
         // Fragments used to save data across state changes e.g. orientation changes
         FragmentManager fm = getSupportFragmentManager();
-        dataFragment = (RetainedFragment) fm.findFragmentByTag("data");
+        dataFragment = (MatchesRetainedFragment) fm.findFragmentByTag("data");
 
         if(dataFragment == null) {
-            dataFragment = new RetainedFragment();
+            dataFragment = new MatchesRetainedFragment();
             fm.beginTransaction().add(dataFragment, "data").commit();
 
             matchesArrayList = new ArrayList<MainMatch>();
@@ -254,7 +254,7 @@ public class MainActivity extends ActionBarActivity {
         }
     }
 
-    private class RetainedFragment extends Fragment {
+    public static class MatchesRetainedFragment extends Fragment {
         private ArrayList<MainMatch> matchesArrayList;
 
         @Override
