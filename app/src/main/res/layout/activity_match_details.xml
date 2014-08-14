@@ -214,8 +214,8 @@
     <Button
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
+        android:layout_below="@id/matchDetailsMainCard"
         android:id="@+id/matchDetailsStreamButton"
-        android:text="Open Twitch stream"
         android:textSize="20sp"
         android:visibility="invisible" />
 

@@ -6,6 +6,8 @@ import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
@@ -25,15 +27,32 @@ import java.net.URL;
 
 public class MatchDetailsActivity extends ActionBarActivity {
     private String matchUrl;
+    private DetailedMatch match;
+    private RetainFragment dataFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        matchUrl = "http://csgolounge.com/" + getIntent().getStringExtra(MainActivity.MATCH_URL);
-        new GetMatchDetailsTask().execute(matchUrl);
-        new GetStreamTask().execute(matchUrl);
         setContentView(R.layout.activity_match_details);
+
+        matchUrl = "http://csgolounge.com/" + getIntent().getStringExtra(MainActivity.MATCH_URL);
+
+        FragmentManager fm = getSupportFragmentManager();
+        dataFragment = (RetainFragment) fm.findFragmentByTag("data");
+
+        if(dataFragment == null) {
+            dataFragment = new RetainFragment();
+            fm.beginTransaction().add(dataFragment, "data").commit();
+
+            match = new DetailedMatch();
+            dataFragment.setDetailedMatch(match);
+            new GetMatchDetailsTask().execute(matchUrl);
+            new GetStreamTask().execute(matchUrl);
+        } else {
+            match = dataFragment.getDetailedMatch();
+            displayMatchInfo(match);
+        }
     }
 
     @Override
@@ -62,10 +81,55 @@ public class MatchDetailsActivity extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    private void displayMatchInfo(final DetailedMatch detailedMatch) {
+        View matchDetailsCard = findViewById(R.id.matchDetailsMainCard);
+        TextView matchDetailsApproximateTime = (TextView) matchDetailsCard.findViewById(R.id.matchDetailsApproximateTime);
+        TextView matchDetailsBestOf = (TextView) matchDetailsCard.findViewById(R.id.matchDetailsBestOf);
+        TextView matchDetailsExactTime = (TextView) matchDetailsCard.findViewById(R.id.matchDetailsExactTime);
+        TextView matchDetailsTeamOneName = (TextView) matchDetailsCard.findViewById(R.id.matchDetailsTeamOneName);
+        TextView matchDetailsTeamOnePercentage = (TextView) matchDetailsCard.findViewById(R.id.matchDetailsTeamOnePercentage);
+        TextView matchDetailsTeamTwoName = (TextView) matchDetailsCard.findViewById(R.id.matchDetailsTeamTwoName);
+        TextView matchDetailsTeamTwoPercentage = (TextView) matchDetailsCard.findViewById(R.id.matchDetailsTeamTwoPercentage);
+        TextView matchDetailsTeamOnePotentialReward = (TextView) matchDetailsCard.findViewById(R.id.matchDetailsTeamOnePotentialReward);
+        TextView matchDetailsTeamTwoPotentialReward = (TextView) matchDetailsCard.findViewById(R.id.matchDetailsTeamTwoPotentialReward);
+        ImageView matchDetailsTeamOneImage = (ImageView) findViewById(R.id.matchDetailsTeamOneImage);
+        ImageView matchDetailsTeamTwoImage = (ImageView) findViewById(R.id.matchDetailsTeamTwoImage);
+
+        matchDetailsApproximateTime.setText(detailedMatch.getApproximateTime());
+        matchDetailsBestOf.setText(detailedMatch.getBestOf());
+        matchDetailsExactTime.setText(detailedMatch.getExactTime());
+        matchDetailsTeamOneName.setText(detailedMatch.getTeamOneName());
+        matchDetailsTeamOnePercentage.setText(detailedMatch.getTeamOnePercentage());
+        matchDetailsTeamTwoName.setText(detailedMatch.getTeamTwoName());
+        matchDetailsTeamTwoPercentage.setText(detailedMatch.getTeamTwoPercentage());
+        matchDetailsTeamOnePotentialReward.setText(detailedMatch.getTeamOnePotentialReward());
+        matchDetailsTeamTwoPotentialReward.setText(detailedMatch.getTeamTwoPotentialReward());
+        matchDetailsTeamOneImage.setImageBitmap(detailedMatch.getTeamOneImage());
+        matchDetailsTeamTwoImage.setImageBitmap(detailedMatch.getTeamTwoImage());
+
+        if(detailedMatch.getStreamUrl() != null) {
+            Button streamButton = (Button) findViewById(R.id.matchDetailsStreamButton);
+            streamButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://twitch.tv/" + detailedMatch.getStreamUrl()));
+                    startActivity(intent);
+                }
+            });
+            streamButton.setVisibility(View.VISIBLE);
+            findViewById(R.id.matchDetailsProgressBar).setVisibility(View.INVISIBLE);
+        }
+
+        findViewById(R.id.matchDetailsProgressBar).setVisibility(View.INVISIBLE);
+        matchDetailsCard.setVisibility(View.VISIBLE);
+    }
+
     private void refresh() {
         findViewById(R.id.matchDetailsProgressBar).setVisibility(View.VISIBLE);
         findViewById(R.id.matchDetailsMainCard).setVisibility(View.INVISIBLE);
+        findViewById(R.id.matchDetailsStreamButton).setVisibility(View.INVISIBLE);
         new GetMatchDetailsTask().execute(matchUrl);
+        new GetStreamTask().execute(matchUrl);
     }
 
     private class GetMatchDetailsTask extends AsyncTask<String, Void, Void> {
@@ -78,7 +142,7 @@ public class MatchDetailsActivity extends ActionBarActivity {
             try {
                 Document doc = Jsoup.connect(matchUrl).get();
                 element = doc.body();
-            } catch (IOException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
 
@@ -98,15 +162,25 @@ public class MatchDetailsActivity extends ActionBarActivity {
             TextView matchDetailsTeamOnePotentialReward = (TextView) matchDetailsCard.findViewById(R.id.matchDetailsTeamOnePotentialReward);
             TextView matchDetailsTeamTwoPotentialReward = (TextView) matchDetailsCard.findViewById(R.id.matchDetailsTeamTwoPotentialReward);
 
-            matchDetailsApproximateTime.setText(element.select(".half").get(0).ownText());
-            matchDetailsBestOf.setText(element.select(".half").get(1).ownText());
-            matchDetailsExactTime.setText(element.select(".half").get(2).ownText());
-            matchDetailsTeamOneName.setText(element.select("#main").select("a > span > b").get(0).ownText());
-            matchDetailsTeamOnePercentage.setText(element.select("#main").select("a > span > i").get(0).ownText());
-            matchDetailsTeamTwoName.setText(element.select("#main").select("a > span > b").get(1).ownText());
-            matchDetailsTeamTwoPercentage.setText(element.select("#main").select("a > span > i").get(1).ownText());
-            matchDetailsTeamOnePotentialReward.setText(element.select(".full > .half").get(0).text().substring("Value ".length()));
-            matchDetailsTeamTwoPotentialReward.setText(element.select(".full > .half").get(1).text().substring("Value ".length()));
+            match.setApproximateTime(element.select(".half").get(0).ownText());
+            match.setBestOf(element.select(".half").get(1).ownText());
+            match.setExactTime(element.select(".half").get(2).ownText());
+            match.setTeamOneName(element.select("#main").select("a > span > b").get(0).ownText());
+            match.setTeamOnePercentage(element.select("#main").select("a > span > i").get(0).ownText());
+            match.setTeamTwoName(element.select("#main").select("a > span > b").get(1).ownText());
+            match.setTeamTwoPercentage(element.select("#main").select("a > span > i").get(1).ownText());
+            match.setTeamOnePotentialReward(element.select(".full > .half").get(0).text().substring("Value ".length()));
+            match.setTeamTwoPotentialReward(element.select(".full > .half").get(1).text().substring("Value ".length()));
+
+            matchDetailsApproximateTime.setText(match.getApproximateTime());
+            matchDetailsBestOf.setText(match.getBestOf());
+            matchDetailsExactTime.setText(match.getExactTime());
+            matchDetailsTeamOneName.setText(match.getTeamOneName());
+            matchDetailsTeamOnePercentage.setText(match.getTeamOnePercentage());
+            matchDetailsTeamTwoName.setText(match.getTeamTwoName());
+            matchDetailsTeamTwoPercentage.setText(match.getTeamTwoPercentage());
+            matchDetailsTeamOnePotentialReward.setText(match.getTeamOnePotentialReward());
+            matchDetailsTeamTwoPotentialReward.setText(match.getTeamTwoPotentialReward());
 
             new GetTeamImagesTask(element).execute();
 
@@ -133,7 +207,7 @@ public class MatchDetailsActivity extends ActionBarActivity {
             try {
                 teamOneImage = getBitmap(teamOneUrl);
                 teamTwoImage = getBitmap(teamTwoUrl);
-            } catch (IOException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
 
@@ -145,8 +219,11 @@ public class MatchDetailsActivity extends ActionBarActivity {
             ImageView matchDetailsTeamOneImage = (ImageView) findViewById(R.id.matchDetailsTeamOneImage);
             ImageView matchDetailsTeamTwoImage = (ImageView) findViewById(R.id.matchDetailsTeamTwoImage);
 
-            matchDetailsTeamOneImage.setImageBitmap(teamOneImage);
-            matchDetailsTeamTwoImage.setImageBitmap(teamTwoImage);
+            match.setTeamOneImage(teamOneImage);
+            match.setTeamTwoImage(teamTwoImage);
+
+            matchDetailsTeamOneImage.setImageBitmap(match.getTeamOneImage());
+            matchDetailsTeamTwoImage.setImageBitmap(match.getTeamTwoImage());
         }
 
         private Bitmap getBitmap(String url) throws IOException {
@@ -163,14 +240,14 @@ public class MatchDetailsActivity extends ActionBarActivity {
             String matchUrl = urls[0];
 
             try {
-                String matchPage = Jsoup.connect(matchUrl).get().select("#mainstream").toString();
-                int channelStart = matchPage.indexOf("channel=") + 8;
-                int channelEnd = matchPage.indexOf("\"", channelStart);
+                String streamAttr = Jsoup.connect(matchUrl).get().select("#live_embed_player_flash").attr("data");
+                if((streamAttr != null) && (streamAttr.contains("twitch.tv"))) {
+                    int channelStart = streamAttr.indexOf("channel=") + 8;
 
-                return matchPage.substring(channelStart, channelEnd);
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch(IndexOutOfBoundsException e) {
+                    match.setStreamUrl(streamAttr.substring(channelStart));
+                    return match.getStreamUrl();
+                }
+            } catch (Exception e) {
                 return null;
             }
 
@@ -179,8 +256,10 @@ public class MatchDetailsActivity extends ActionBarActivity {
 
         @Override
         protected void onPostExecute(final String streamUrl) {
+            Button streamButton = (Button) findViewById(R.id.matchDetailsStreamButton);
+
             if(streamUrl != null) {
-                Button streamButton = (Button) findViewById(R.id.matchDetailsStreamButton);
+                streamButton.setText("Twitch Stream Available!");
                 streamButton.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
@@ -188,9 +267,34 @@ public class MatchDetailsActivity extends ActionBarActivity {
                         startActivity(intent);
                     }
                 });
-                streamButton.setVisibility(View.VISIBLE);
-                findViewById(R.id.matchDetailsProgressBar).setVisibility(View.INVISIBLE);
+                streamButton.setEnabled(true);
+                streamButton.setClickable(true);
+            } else {
+                streamButton.setText("No Twitch Streams");
+                streamButton.setEnabled(false);
+                streamButton.setClickable(false);
             }
+
+            streamButton.setVisibility(View.VISIBLE);
+            findViewById(R.id.matchDetailsProgressBar).setVisibility(View.INVISIBLE);
+        }
+    }
+
+    private class RetainFragment extends Fragment {
+        private DetailedMatch match;
+
+        @Override
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            setRetainInstance(true);
+        }
+
+        public void setDetailedMatch(DetailedMatch match) {
+            this.match = match;
+        }
+
+        public DetailedMatch getDetailedMatch() {
+            return match;
         }
     }
 }

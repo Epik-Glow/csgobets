@@ -2,7 +2,7 @@ package com.davenwu.csgobets;
 
 import android.graphics.Bitmap;
 
-public class Match {
+public class MainMatch {
     private String time, additionalInfo, event, teamOneName, teamTwoName, teamOnePercentage, teamTwoPercentage, matchUrl;
     private Bitmap eventBackground, teamOneImage, teamTwoImage;
     private boolean matchOver = false, teamOneWin = false, teamTwoWin = false;

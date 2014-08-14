@@ -1,18 +1,22 @@
 package com.davenwu.csgobets;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v7.app.ActionBarActivity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AlphaAnimation;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -28,19 +32,36 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 
-public class MainActivity extends Activity {
+public class MainActivity extends ActionBarActivity {
     public static final String MATCH_URL = "com.davenwu.csgobets.MATCHURL";
-    private ArrayList<Match> matchesArrayList;
-    private MatchAdapter matchAdapter;
+    private ArrayList<MainMatch> matchesArrayList;
+    private MatchesAdapter matchAdapter;
+    private RetainedFragment dataFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        matchesArrayList = new ArrayList<Match>();
-        matchAdapter = new MatchAdapter(this, matchesArrayList);
-        ((ListView) findViewById(R.id.matchesList)).setAdapter(matchAdapter);
-        checkMatches();
+
+        // Fragments used to save data across state changes e.g. orientation changes
+        FragmentManager fm = getSupportFragmentManager();
+        dataFragment = (RetainedFragment) fm.findFragmentByTag("data");
+
+        if(dataFragment == null) {
+            dataFragment = new RetainedFragment();
+            fm.beginTransaction().add(dataFragment, "data").commit();
+
+            matchesArrayList = new ArrayList<MainMatch>();
+            dataFragment.setMatchesArrayList(matchesArrayList);
+            matchAdapter = new MatchesAdapter(this, matchesArrayList);
+            ((ListView) findViewById(R.id.matchesList)).setAdapter(matchAdapter);
+            checkMatches();
+        } else {
+            findViewById(R.id.matchesProgressBar).setVisibility(View.INVISIBLE);
+            matchesArrayList = dataFragment.getMatchesArrayList();
+            matchAdapter = new MatchesAdapter(this, matchesArrayList);
+            ((ListView) findViewById(R.id.matchesList)).setAdapter(matchAdapter);
+        }
     }
 
     @Override
@@ -65,6 +86,12 @@ public class MainActivity extends Activity {
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        dataFragment.setMatchesArrayList(matchesArrayList);
+    }
+
     public void checkMatches() {
         matchesArrayList.clear();
         matchAdapter.notifyDataSetChanged();
@@ -72,11 +99,11 @@ public class MainActivity extends Activity {
         new CheckMatchesTask().execute();
     }
 
-    private class MatchAdapter extends ArrayAdapter<Match> {
+    private class MatchesAdapter extends ArrayAdapter<MainMatch> {
         private Context context;
-        private ArrayList<Match> matches;
+        private ArrayList<MainMatch> matches;
 
-        public MatchAdapter(Context context, ArrayList<Match> matches) {
+        public MatchesAdapter(Context context, ArrayList<MainMatch> matches) {
             super(context, R.layout.match_card, matches);
             this.context = context;
             this.matches = matches;
@@ -111,7 +138,14 @@ public class MainActivity extends Activity {
             matchCardTeamTwoImage.setImageBitmap(matches.get(position).getTeamTwoImage());
 
             if(matches.get(position).isMatchOver()) {
-                matchCard.findViewById(R.id.matchCardMainCard).setAlpha(0.5f);
+                if(android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+                    matchCard.findViewById(R.id.matchCardMainCard).setAlpha(0.5f);
+                } else {
+                    AlphaAnimation alpha = new AlphaAnimation(0.5F, 0.5F);
+                    alpha.setDuration(0);
+                    alpha.setFillAfter(true);
+                    matchCard.startAnimation(alpha);
+                }
             }
             if(matches.get(position).isTeamOneWin()) {
                 matchCardTeamOneWin.setVisibility(View.VISIBLE);
@@ -151,8 +185,9 @@ public class MainActivity extends Activity {
         protected void onPostExecute(Void v) {
             matchesElement = doc.getElementById("bets").children();
             findViewById(R.id.matchesProgressBar).setVisibility(View.INVISIBLE);
+
             for(Element element : matchesElement) {
-                Match match = new Match();
+                MainMatch match = new MainMatch();
 
                 match.setTime(element.select(".matchheader").select(".whenm").get(0).ownText());
                 match.setAdditionalInfo(element.select(".matchheader").select(".whenm").select("span").text());
@@ -175,10 +210,10 @@ public class MainActivity extends Activity {
     }
 
     private class DownloadTeamImagesTask extends AsyncTask<Element, Void, Void> {
-        Match match;
+        MainMatch match;
         Bitmap eventBackground, teamOneImage, teamTwoImage;
 
-        public DownloadTeamImagesTask(Match match) {
+        public DownloadTeamImagesTask(MainMatch match) {
             this.match = match;
         }
 
@@ -196,7 +231,7 @@ public class MainActivity extends Activity {
                 eventBackground = getBitmap(bgUrl);
                 teamOneImage = getBitmap(teamOneUrl);
                 teamTwoImage = getBitmap(teamTwoUrl);
-            } catch (IOException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
 
@@ -216,6 +251,24 @@ public class MainActivity extends Activity {
             Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
             inputStream.close();
             return bitmap;
+        }
+    }
+
+    private class RetainedFragment extends Fragment {
+        private ArrayList<MainMatch> matchesArrayList;
+
+        @Override
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            setRetainInstance(true);
+        }
+
+        public void setMatchesArrayList(ArrayList<MainMatch> matchesArrayList) {
+            this.matchesArrayList = matchesArrayList;
+        }
+
+        public ArrayList<MainMatch> getMatchesArrayList() {
+            return matchesArrayList;
         }
     }
 }

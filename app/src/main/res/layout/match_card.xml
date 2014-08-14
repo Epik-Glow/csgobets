@@ -18,9 +18,10 @@
             android:textSize="12sp" />
 
         <TextView
-            android:layout_width="wrap_content"
+            android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:layout_toRightOf="@id/matchCardTime"
+            android:layout_toLeftOf="@+id/matchCardEvent"
             android:layout_alignParentBottom="true"
             android:id="@+id/matchCardAdditionalInfo"
             android:textSize="10sp"
@@ -31,7 +32,7 @@
             android:layout_height="wrap_content"
             android:layout_alignParentRight="true"
             android:layout_marginRight="@dimen/match_card_event_name_margin_right"
-            android:id="@+id/matchCardEvent"
+            android:id="@id/matchCardEvent"
             android:textSize="12sp" />
 
     </RelativeLayout>
@@ -89,6 +90,8 @@
                         android:layout_height="50dp"
                         android:layout_below="@id/matchCardTeamOneName"
                         android:layout_centerHorizontal="true"
+                        android:layout_marginTop="@dimen/match_card_team_vertical_margin"
+                        android:layout_marginBottom="@dimen/match_card_team_vertical_margin"
                         android:id="@+id/matchCardTeamOneImage" />
 
                     <ImageView
