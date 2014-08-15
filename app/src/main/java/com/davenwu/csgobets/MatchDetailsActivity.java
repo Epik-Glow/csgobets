@@ -1,8 +1,9 @@
 package com.davenwu.csgobets;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -89,6 +90,17 @@ public class MatchDetailsActivity extends ActionBarActivity {
             return true;
         } else if(id == R.id.action_refresh) {
             refresh();
+        } else if(id == R.id.action_show_legal) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage(R.string.legal)
+                    .setTitle("Legal")
+                    .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+
+                        }
+                    })
+                    .show();
         }
         return super.onOptionsItemSelected(item);
     }
@@ -261,9 +273,26 @@ public class MatchDetailsActivity extends ActionBarActivity {
         @Override
         protected Void doInBackground(Void... voids) {
             String teamOneAttr = element.select(".team").get(0).attr("style");
-            String teamOneUrl = teamOneAttr.substring(teamOneAttr.indexOf("background: url('") + 17, teamOneAttr.length() - 2).replace("\\", "");
+            int teamOneUrlStart = teamOneAttr.indexOf("background: url('") + 17;
+            int teamOneUrlEnd = teamOneAttr.indexOf("?", teamOneUrlStart);
+            String teamOneUrl;
+
+            if(teamOneAttr.contains("?")) {
+                teamOneUrl = teamOneAttr.substring(teamOneUrlStart, teamOneUrlEnd);
+            } else {
+                teamOneUrl = teamOneAttr.substring(teamOneUrlStart);
+            }
+
             String teamTwoAttr = element.select(".team").get(1).attr("style");
-            String teamTwoUrl = teamTwoAttr.substring(teamTwoAttr.indexOf("background: url('") + 17, teamTwoAttr.length() - 2).replace("\\", "");
+            int teamTwoUrlStart = teamTwoAttr.indexOf("background: url('") + 17;
+            int teamTwoUrlEnd = teamTwoAttr.indexOf("?", teamTwoUrlStart);
+            String teamTwoUrl;
+
+            if(teamTwoAttr.contains("?")) {
+                teamTwoUrl = teamTwoAttr.substring(teamTwoUrlStart, teamTwoUrlEnd);
+            } else {
+                teamTwoUrl = teamTwoAttr.substring(teamTwoUrlStart);
+            }
 
             try {
                 teamOneImage = getBitmap(teamOneUrl);
@@ -288,10 +317,14 @@ public class MatchDetailsActivity extends ActionBarActivity {
         }
 
         private Bitmap getBitmap(String url) throws IOException {
-            InputStream inputStream = (InputStream) new URL(url).getContent();
-            Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
-            inputStream.close();
-            return bitmap;
+            if(MainActivity.imageCache.getBitmap(url) != null) {
+                return MainActivity.imageCache.getBitmap(url).getBitmap();
+            } else {
+                InputStream inputStream = (InputStream) new URL(url).getContent();
+                MainActivity.imageCache.put(url, inputStream);
+                inputStream.close();
+                return MainActivity.imageCache.getBitmap(url).getBitmap();
+            }
         }
     }
 

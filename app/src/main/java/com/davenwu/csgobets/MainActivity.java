@@ -1,13 +1,15 @@
 package com.davenwu.csgobets;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.ActionBarActivity;
@@ -27,12 +29,20 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 
+import cz.fhucho.android.util.SimpleDiskCache;
+
 public class MainActivity extends ActionBarActivity {
+    public static SimpleDiskCache imageCache;
+
+    private static final int DISK_CACHE_SIZE = 1024 * 1024 * 10; // 10 MB
+    private static final String DISK_CACHE_DIR = "csgobets_images";
+
     public static final String MATCH_ID = "com.davenwu.csgobets.MATCHURL";
     public static final String MATCH_OVER = "com.davenwu.csgobets.MATCHOVER";
 
@@ -49,6 +59,22 @@ public class MainActivity extends ActionBarActivity {
         // Fragments used to save data across state changes e.g. orientation changes
         FragmentManager fm = getSupportFragmentManager();
         dataFragment = (MatchesRetainedFragment) fm.findFragmentByTag("data");
+
+
+        try {
+            File cacheDir;
+            if(android.os.Build.VERSION.SDK_INT <= Build.VERSION_CODES.ECLAIR) {
+                File externalPath = Environment.getExternalStorageDirectory();
+                cacheDir = new File(externalPath.getAbsolutePath() +
+                        "/Android/data/" + getPackageName() + "/files/" + DISK_CACHE_DIR);
+            } else {
+                cacheDir = getExternalFilesDir(DISK_CACHE_DIR);
+            }
+
+            imageCache = SimpleDiskCache.open(cacheDir, 1, DISK_CACHE_SIZE);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         if(dataFragment == null) {
             dataFragment = new MatchesRetainedFragment();
@@ -90,6 +116,17 @@ public class MainActivity extends ActionBarActivity {
         } else if(id == R.id.action_open_csgolounge) {
             Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://csgolounge.com"));
             startActivity(intent);
+        } else if(id == R.id.action_show_legal) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage(R.string.legal)
+                    .setTitle("Legal")
+                    .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+
+                        }
+                    })
+                    .show();
         }
         return super.onOptionsItemSelected(item);
     }
@@ -243,11 +280,31 @@ public class MainActivity extends ActionBarActivity {
         protected Void doInBackground(Element... elements) {
             Element element = elements[0];
             String bgAttr = element.select(".match").attr("style");
-            String bgUrl = bgAttr.substring(bgAttr.indexOf("background-image: url('") + 23, bgAttr.length() - 2);
+            int bgUrlStart = bgAttr.indexOf("background-image: url('") + 23;
+            int bgUrlEnd = bgAttr.indexOf("?", bgUrlStart);
+            String bgUrl = bgAttr.substring(bgUrlStart, bgUrlEnd);
+
             String teamOneAttr = element.select(".match").select(".matchleft").select("a").select("div").get(1).attr("style").replace("\\", "");
-            String teamOneUrl = teamOneAttr.substring(teamOneAttr.indexOf("background: url('") + 17, teamOneAttr.length() - 2);
+            int teamOneUrlStart = teamOneAttr.indexOf("background: url('") + 17;
+            int teamOneUrlEnd = teamOneAttr.indexOf("?", teamOneUrlStart);
+            String teamOneUrl;
+
+            if(teamOneAttr.contains("?")) {
+                teamOneUrl = teamOneAttr.substring(teamOneUrlStart, teamOneUrlEnd);
+            } else {
+                teamOneUrl = teamOneAttr.substring(teamOneUrlStart);
+            }
+
             String teamTwoAttr = element.select(".match").select(".matchleft").select("a").select("div").get(5).attr("style").replace("\\", "");
-            String teamTwoUrl = teamTwoAttr.substring(teamTwoAttr.indexOf("background: url('") + 17, teamTwoAttr.length() - 2);
+            int teamTwoUrlStart = teamTwoAttr.indexOf("background: url('") + 17;
+            int teamTwoUrlEnd = teamTwoAttr.indexOf("?", teamTwoUrlStart);
+            String teamTwoUrl;
+
+            if(teamTwoAttr.contains("?")) {
+                teamTwoUrl = teamTwoAttr.substring(teamTwoUrlStart, teamTwoUrlEnd);
+            } else {
+                teamTwoUrl = teamTwoAttr.substring(teamTwoUrlStart);
+            }
 
             try {
                 eventBackground = getBitmap(bgUrl);
@@ -269,10 +326,14 @@ public class MainActivity extends ActionBarActivity {
         }
 
         private Bitmap getBitmap(String url) throws IOException {
-            InputStream inputStream = (InputStream) new URL(url).getContent();
-            Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
-            inputStream.close();
-            return bitmap;
+            if(imageCache.getBitmap(url) != null) {
+                return imageCache.getBitmap(url).getBitmap();
+            } else {
+                InputStream inputStream = (InputStream) new URL(url).getContent();
+                imageCache.put(url, inputStream);
+                inputStream.close();
+                return imageCache.getBitmap(url).getBitmap();
+            }
         }
     }
 

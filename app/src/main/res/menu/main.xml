@@ -11,4 +11,9 @@
         android:title="Open CSGOLounge"
         android:showAsAction="never"
         csgobets:showAsAction="never" />
+    <item
+        android:id="@+id/action_show_legal"
+        android:title="Legal"
+        android:showAsAction="never"
+        csgobets:showAsAction="never" />
 </menu>
