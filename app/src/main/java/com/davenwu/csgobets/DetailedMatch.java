@@ -7,6 +7,7 @@ public class DetailedMatch {
             teamTwoName, teamTwoPercentage, teamOnePotentialReward, teamTwoPotentialReward,
             streamUrl;
     private Bitmap teamOneImage, teamTwoImage;
+    private boolean matchOver;
 
     public String getApproximateTime() {
         return approximateTime;
@@ -102,6 +103,14 @@ public class DetailedMatch {
 
     public void setTeamTwoImage(Bitmap teamTwoImage) {
         this.teamTwoImage = teamTwoImage;
+    }
+
+    public boolean isMatchOver() {
+        return matchOver;
+    }
+
+    public void setMatchOver(boolean matchOver) {
+        this.matchOver = matchOver;
     }
 
 }

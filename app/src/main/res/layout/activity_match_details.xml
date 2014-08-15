@@ -17,6 +17,34 @@
         android:layout_centerVertical="true"
         android:layout_centerHorizontal="true" />
 
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:gravity="center"
+        android:id="@+id/matchDetailsNoConnection"
+        android:visibility="invisible">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_marginBottom="@dimen/no_connection_text_bottom_margin"
+            android:id="@+id/matchDetailsNoConnectionText"
+            android:text="No connection"
+            android:textSize="22sp" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/matchDetailsNoConnectionText"
+            android:layout_centerHorizontal="true"
+            android:text="Retry"
+            android:textSize="24sp"
+            android:onClick="refresh" />
+
+    </RelativeLayout>
+
     <ScrollView
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
@@ -224,8 +252,32 @@
                 android:layout_height="wrap_content"
                 android:layout_below="@id/matchDetailsMainCard"
                 android:id="@+id/matchDetailsStreamButton"
+                android:text="Checking for Twitch streams"
                 android:textSize="20sp"
-                android:visibility="invisible" />
+                android:visibility="invisible"
+                android:enabled="false"
+                android:clickable="false" />
+
+            <Button
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/matchDetailsStreamButton"
+                android:id="@+id/matchDetailsCsgoLoungeButton"
+                android:text="Open CSGO Lounge page"
+                android:textSize="20sp"
+                android:visibility="invisible"
+                android:onClick="openCsgoLounge" />
+
+            <Button
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/matchDetailsCsgoLoungeButton"
+                android:id="@+id/matchDetailsRedditButton"
+                android:text="Checking for reddit thread"
+                android:textSize="20sp"
+                android:visibility="invisible"
+                android:enabled="false"
+                android:clickable="false" />
 
         </RelativeLayout>
 

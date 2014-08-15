@@ -6,9 +6,4 @@
         android:icon="@drawable/ic_action_refresh"
         android:showAsAction="always"
         csgobets:showAsAction="always"/>
-    <item
-        android:id="@+id/action_open_csgolounge"
-        android:title="CSGOLounge page"
-        android:showAsAction="never"
-        csgobets:showAsAction="never" />
 </menu>

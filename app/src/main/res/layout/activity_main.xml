@@ -45,8 +45,7 @@
             android:layout_centerHorizontal="true"
             android:text="Retry"
             android:textSize="24sp"
-            android:onClick="checkMatches"
-            />
+            android:onClick="checkMatches" />
 
     </RelativeLayout>
 

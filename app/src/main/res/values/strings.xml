@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">Matches</string>
+    <string name="app_name">CSGO Bets</string>
+    <string name="title_activity_main">Matches</string>
     <string name="title_activity_match_details">Match Details</string>
 
 </resources>

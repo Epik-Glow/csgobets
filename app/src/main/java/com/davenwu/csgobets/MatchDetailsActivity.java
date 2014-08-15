@@ -17,12 +17,23 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.StatusLine;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URL;
 
 public class MatchDetailsActivity extends ActionBarActivity {
@@ -36,7 +47,7 @@ public class MatchDetailsActivity extends ActionBarActivity {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         setContentView(R.layout.activity_match_details);
 
-        matchUrl = "http://csgolounge.com/" + getIntent().getStringExtra(MainActivity.MATCH_URL);
+        matchUrl = "http://csgolounge.com/" + getIntent().getStringExtra(MainActivity.MATCH_ID);
 
         FragmentManager fm = getSupportFragmentManager();
         dataFragment = (DetailedMatchRetainFragment) fm.findFragmentByTag("data");
@@ -46,12 +57,17 @@ public class MatchDetailsActivity extends ActionBarActivity {
             fm.beginTransaction().add(dataFragment, "data").commit();
 
             match = new DetailedMatch();
+            match.setMatchOver(getIntent().getBooleanExtra(MainActivity.MATCH_OVER, false));
             dataFragment.setDetailedMatch(match);
+            dataFragment.setNotConnected(false);
             new GetMatchDetailsTask().execute(matchUrl);
-            new GetStreamTask().execute(matchUrl);
         } else {
-            match = dataFragment.getDetailedMatch();
-            displayMatchInfo(match);
+            if(dataFragment.isNotConnected()) {
+                showNoConnection();
+            } else {
+                match = dataFragment.getDetailedMatch();
+                displayMatchInfo(match);
+            }
         }
     }
 
@@ -71,10 +87,6 @@ public class MatchDetailsActivity extends ActionBarActivity {
         if (id == android.R.id.home) {
             NavUtils.navigateUpFromSameTask(this);
             return true;
-        } else if(id == R.id.action_open_csgolounge) {
-            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(matchUrl));
-            startActivity(intent);
-            return true;
         } else if(id == R.id.action_refresh) {
             refresh();
         }
@@ -82,6 +94,8 @@ public class MatchDetailsActivity extends ActionBarActivity {
     }
 
     private void displayMatchInfo(final DetailedMatch detailedMatch) {
+        findViewById(R.id.matchDetailsNoConnection).setVisibility(View.INVISIBLE);
+
         View matchDetailsCard = findViewById(R.id.matchDetailsMainCard);
         TextView matchDetailsApproximateTime = (TextView) matchDetailsCard.findViewById(R.id.matchDetailsApproximateTime);
         TextView matchDetailsBestOf = (TextView) matchDetailsCard.findViewById(R.id.matchDetailsBestOf);
@@ -126,26 +140,59 @@ public class MatchDetailsActivity extends ActionBarActivity {
         findViewById(R.id.matchDetailsProgressBar).setVisibility(View.INVISIBLE);
         matchDetailsCard.setVisibility(View.VISIBLE);
         streamButton.setVisibility(View.VISIBLE);
+        findViewById(R.id.matchDetailsCsgoLoungeButton).setVisibility(View.VISIBLE);
+        findViewById(R.id.matchDetailsRedditButton).setVisibility(View.VISIBLE);
     }
 
-    private void refresh() {
-        findViewById(R.id.matchDetailsProgressBar).setVisibility(View.VISIBLE);
-        findViewById(R.id.matchDetailsMainCard).setVisibility(View.INVISIBLE);
-        findViewById(R.id.matchDetailsStreamButton).setVisibility(View.INVISIBLE);
+    public void refresh() {
+        showLoading();
         new GetMatchDetailsTask().execute(matchUrl);
         new GetStreamTask().execute(matchUrl);
     }
 
-    private class GetMatchDetailsTask extends AsyncTask<String, Void, Void> {
-        Element element;
+    public void refresh(View v) {
+        refresh();
+    }
+
+    private void showLoading() {
+        findViewById(R.id.matchDetailsProgressBar).setVisibility(View.VISIBLE);
+        findViewById(R.id.matchDetailsNoConnection).setVisibility(View.INVISIBLE);
+        findViewById(R.id.matchDetailsMainCard).setVisibility(View.INVISIBLE);
+        findViewById(R.id.matchDetailsStreamButton).setVisibility(View.INVISIBLE);
+        findViewById(R.id.matchDetailsCsgoLoungeButton).setVisibility(View.INVISIBLE);
+        findViewById(R.id.matchDetailsRedditButton).setVisibility(View.INVISIBLE);
+    }
+
+    private void showMatchDetails() {
+        findViewById(R.id.matchDetailsProgressBar).setVisibility(View.INVISIBLE);
+        findViewById(R.id.matchDetailsNoConnection).setVisibility(View.INVISIBLE);
+        findViewById(R.id.matchDetailsMainCard).setVisibility(View.VISIBLE);
+        findViewById(R.id.matchDetailsStreamButton).setVisibility(View.VISIBLE);
+        findViewById(R.id.matchDetailsCsgoLoungeButton).setVisibility(View.VISIBLE);
+        findViewById(R.id.matchDetailsRedditButton).setVisibility(View.VISIBLE);
+    }
+
+    private void showNoConnection() {
+        findViewById(R.id.matchDetailsProgressBar).setVisibility(View.INVISIBLE);
+        findViewById(R.id.matchDetailsNoConnection).setVisibility(View.VISIBLE);
+    }
+
+    public void openCsgoLounge(View v) {
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(matchUrl));
+        startActivity(intent);
+    }
+
+    private class GetMatchDetailsTask extends AsyncTask<String, Void, Element> {
+        Document doc;
 
         @Override
-        protected Void doInBackground(String... urls) {
+        protected Element doInBackground(String... urls) {
             String matchUrl = urls[0];
 
             try {
-                Document doc = Jsoup.connect(matchUrl).get();
-                element = doc.body();
+                doc = Jsoup.connect(matchUrl).get();
+
+                return doc.body();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -154,42 +201,52 @@ public class MatchDetailsActivity extends ActionBarActivity {
         }
 
         @Override
-        protected void onPostExecute(Void v) {
-            View matchDetailsCard = findViewById(R.id.matchDetailsMainCard);
-            TextView matchDetailsApproximateTime = (TextView) matchDetailsCard.findViewById(R.id.matchDetailsApproximateTime);
-            TextView matchDetailsBestOf = (TextView) matchDetailsCard.findViewById(R.id.matchDetailsBestOf);
-            TextView matchDetailsExactTime = (TextView) matchDetailsCard.findViewById(R.id.matchDetailsExactTime);
-            TextView matchDetailsTeamOneName = (TextView) matchDetailsCard.findViewById(R.id.matchDetailsTeamOneName);
-            TextView matchDetailsTeamOnePercentage = (TextView) matchDetailsCard.findViewById(R.id.matchDetailsTeamOnePercentage);
-            TextView matchDetailsTeamTwoName = (TextView) matchDetailsCard.findViewById(R.id.matchDetailsTeamTwoName);
-            TextView matchDetailsTeamTwoPercentage = (TextView) matchDetailsCard.findViewById(R.id.matchDetailsTeamTwoPercentage);
-            TextView matchDetailsTeamOnePotentialReward = (TextView) matchDetailsCard.findViewById(R.id.matchDetailsTeamOnePotentialReward);
-            TextView matchDetailsTeamTwoPotentialReward = (TextView) matchDetailsCard.findViewById(R.id.matchDetailsTeamTwoPotentialReward);
+        protected void onPostExecute(Element element) {
+            if(doc == null) {
+                dataFragment.setNotConnected(true);
+                showNoConnection();
+            } else {
+                dataFragment.setNotConnected(false);
 
-            match.setApproximateTime(element.select(".half").get(0).ownText());
-            match.setBestOf(element.select(".half").get(1).ownText());
-            match.setExactTime(element.select(".half").get(2).ownText());
-            match.setTeamOneName(element.select("#main").select("a > span > b").get(0).ownText());
-            match.setTeamOnePercentage(element.select("#main").select("a > span > i").get(0).ownText());
-            match.setTeamTwoName(element.select("#main").select("a > span > b").get(1).ownText());
-            match.setTeamTwoPercentage(element.select("#main").select("a > span > i").get(1).ownText());
-            match.setTeamOnePotentialReward(element.select(".full > .half").get(0).text().substring("Value ".length()));
-            match.setTeamTwoPotentialReward(element.select(".full > .half").get(1).text().substring("Value ".length()));
+                View matchDetailsCard = findViewById(R.id.matchDetailsMainCard);
+                TextView matchDetailsApproximateTime = (TextView) matchDetailsCard.findViewById(R.id.matchDetailsApproximateTime);
+                TextView matchDetailsBestOf = (TextView) matchDetailsCard.findViewById(R.id.matchDetailsBestOf);
+                TextView matchDetailsExactTime = (TextView) matchDetailsCard.findViewById(R.id.matchDetailsExactTime);
+                TextView matchDetailsTeamOneName = (TextView) matchDetailsCard.findViewById(R.id.matchDetailsTeamOneName);
+                TextView matchDetailsTeamOnePercentage = (TextView) matchDetailsCard.findViewById(R.id.matchDetailsTeamOnePercentage);
+                TextView matchDetailsTeamTwoName = (TextView) matchDetailsCard.findViewById(R.id.matchDetailsTeamTwoName);
+                TextView matchDetailsTeamTwoPercentage = (TextView) matchDetailsCard.findViewById(R.id.matchDetailsTeamTwoPercentage);
+                TextView matchDetailsTeamOnePotentialReward = (TextView) matchDetailsCard.findViewById(R.id.matchDetailsTeamOnePotentialReward);
+                TextView matchDetailsTeamTwoPotentialReward = (TextView) matchDetailsCard.findViewById(R.id.matchDetailsTeamTwoPotentialReward);
 
-            matchDetailsApproximateTime.setText(match.getApproximateTime());
-            matchDetailsBestOf.setText(match.getBestOf());
-            matchDetailsExactTime.setText(match.getExactTime());
-            matchDetailsTeamOneName.setText(match.getTeamOneName());
-            matchDetailsTeamOnePercentage.setText(match.getTeamOnePercentage());
-            matchDetailsTeamTwoName.setText(match.getTeamTwoName());
-            matchDetailsTeamTwoPercentage.setText(match.getTeamTwoPercentage());
-            matchDetailsTeamOnePotentialReward.setText(match.getTeamOnePotentialReward());
-            matchDetailsTeamTwoPotentialReward.setText(match.getTeamTwoPotentialReward());
+                match.setApproximateTime(element.select(".half").get(0).ownText());
+                match.setBestOf(element.select(".half").get(1).ownText());
+                match.setExactTime(element.select(".half").get(2).ownText());
+                match.setTeamOneName(element.select("#main").select("a > span > b").get(0).ownText());
+                match.setTeamOnePercentage(element.select("#main").select("a > span > i").get(0).ownText());
+                match.setTeamTwoName(element.select("#main").select("a > span > b").get(1).ownText());
+                match.setTeamTwoPercentage(element.select("#main").select("a > span > i").get(1).ownText());
+                match.setTeamOnePotentialReward(element.select(".full > .half").get(0).text().substring("Value ".length()));
+                match.setTeamTwoPotentialReward(element.select(".full > .half").get(1).text().substring("Value ".length()));
 
-            new GetTeamImagesTask(element).execute();
+                matchDetailsApproximateTime.setText(match.getApproximateTime());
+                matchDetailsBestOf.setText(match.getBestOf());
+                matchDetailsExactTime.setText(match.getExactTime());
+                matchDetailsTeamOneName.setText(match.getTeamOneName());
+                matchDetailsTeamOnePercentage.setText(match.getTeamOnePercentage());
+                matchDetailsTeamTwoName.setText(match.getTeamTwoName());
+                matchDetailsTeamTwoPercentage.setText(match.getTeamTwoPercentage());
+                matchDetailsTeamOnePotentialReward.setText(match.getTeamOnePotentialReward());
+                matchDetailsTeamTwoPotentialReward.setText(match.getTeamTwoPotentialReward());
 
-            findViewById(R.id.matchDetailsProgressBar).setVisibility(View.INVISIBLE);
-            matchDetailsCard.setVisibility(View.VISIBLE);
+                showMatchDetails();
+
+                new GetTeamImagesTask(element).execute();
+                new GetStreamTask().execute(matchUrl);
+                new GetRedditThreadTask().execute(("http://reddit.com/r/csgobetting/search.json?q="
+                        + match.getTeamOneName() + " vs " + match.getTeamTwoName()
+                        + "&restrict_sr=true&sort=relevance&t=week").replace("(win)", "").replace(" ", "%20"));
+            }
         }
     }
 
@@ -204,9 +261,9 @@ public class MatchDetailsActivity extends ActionBarActivity {
         @Override
         protected Void doInBackground(Void... voids) {
             String teamOneAttr = element.select(".team").get(0).attr("style");
-            String teamOneUrl = teamOneAttr.substring(teamOneAttr.indexOf("background: url('") + 17, teamOneAttr.length() - 2);
+            String teamOneUrl = teamOneAttr.substring(teamOneAttr.indexOf("background: url('") + 17, teamOneAttr.length() - 2).replace("\\", "");
             String teamTwoAttr = element.select(".team").get(1).attr("style");
-            String teamTwoUrl = teamTwoAttr.substring(teamTwoAttr.indexOf("background: url('") + 17, teamTwoAttr.length() - 2);
+            String teamTwoUrl = teamTwoAttr.substring(teamTwoAttr.indexOf("background: url('") + 17, teamTwoAttr.length() - 2).replace("\\", "");
 
             try {
                 teamOneImage = getBitmap(teamOneUrl);
@@ -278,13 +335,71 @@ public class MatchDetailsActivity extends ActionBarActivity {
                 streamButton.setEnabled(false);
                 streamButton.setClickable(false);
             }
+        }
+    }
 
-            streamButton.setVisibility(View.VISIBLE);
+    private class GetRedditThreadTask extends AsyncTask<String, Void, String> {
+
+        @Override
+        protected String doInBackground(String... urls) {
+            StringBuilder builder = new StringBuilder();
+            HttpClient client = new DefaultHttpClient();
+            HttpGet httpGet = new HttpGet(urls[0]);
+
+            try {
+                HttpResponse response = client.execute(httpGet);
+                StatusLine statusLine = response.getStatusLine();
+                int statusCode = statusLine.getStatusCode();
+
+                if (statusCode == 200) {
+                    HttpEntity entity = response.getEntity();
+                    InputStream content = entity.getContent();
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(content));
+
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        builder.append(line);
+                    }
+
+                    JSONObject jsonObject = new JSONObject(builder.toString());
+                    return jsonObject.getJSONObject("data").getJSONArray("children")
+                            .getJSONObject(0).getJSONObject("data").getString("url");
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            } catch (ClientProtocolException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(final String threadUrl) {
+            Button redditButton = (Button) findViewById(R.id.matchDetailsRedditButton);
+
+            if(threadUrl != null) {
+                redditButton.setText("Open reddit thread");
+                redditButton.setEnabled(true);
+                redditButton.setClickable(true);
+                redditButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(threadUrl));
+                        startActivity(intent);
+                    }
+                });
+            } else {
+                redditButton.setText("Couldn't find reddit thread");
+            }
         }
     }
 
     public static class DetailedMatchRetainFragment extends Fragment {
         private DetailedMatch match;
+        private boolean notConnected;
 
         @Override
         public void onCreate(Bundle savedInstanceState) {
@@ -298,6 +413,14 @@ public class MatchDetailsActivity extends ActionBarActivity {
 
         public DetailedMatch getDetailedMatch() {
             return match;
+        }
+
+        public void setNotConnected(boolean notConnected) {
+            this.notConnected = notConnected;
+        }
+
+        public boolean isNotConnected() {
+            return notConnected;
         }
     }
 }
