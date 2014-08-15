@@ -21,4 +21,34 @@
         android:layout_centerHorizontal="true"
         android:indeterminate="true" />
 
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:gravity="center"
+        android:id="@+id/matchesNoConnection"
+        android:visibility="invisible">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_marginBottom="@dimen/no_connection_text_bottom_margin"
+            android:id="@+id/matchesNoConnectionText"
+            android:text="No connection"
+            android:textSize="22sp" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/matchesNoConnectionText"
+            android:layout_centerHorizontal="true"
+            android:text="Retry"
+            android:textSize="24sp"
+            android:onClick="checkMatches"
+            />
+
+    </RelativeLayout>
+
+
 </RelativeLayout>

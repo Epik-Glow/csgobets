@@ -96,7 +96,14 @@ public class MainActivity extends ActionBarActivity {
         matchesArrayList.clear();
         matchAdapter.notifyDataSetChanged();
         findViewById(R.id.matchesProgressBar).setVisibility(View.VISIBLE);
+        findViewById(R.id.matchesNoConnection).setVisibility(View.INVISIBLE);
+
         new CheckMatchesTask().execute();
+    }
+
+    // Only for handling onClick
+    public void checkMatches(View v) {
+        checkMatches();
     }
 
     private class MatchesAdapter extends ArrayAdapter<MainMatch> {
@@ -183,8 +190,14 @@ public class MainActivity extends ActionBarActivity {
 
         @Override
         protected void onPostExecute(Void v) {
-            matchesElement = doc.getElementById("bets").children();
             findViewById(R.id.matchesProgressBar).setVisibility(View.INVISIBLE);
+
+            if(doc == null) {
+                findViewById(R.id.matchesNoConnection).setVisibility(View.VISIBLE);
+                return;
+            }
+
+            matchesElement = doc.getElementById("bets").children();
 
             for(Element element : matchesElement) {
                 MainMatch match = new MainMatch();
