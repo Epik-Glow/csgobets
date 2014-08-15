@@ -63,7 +63,7 @@ public class MainActivity extends ActionBarActivity {
 
         try {
             File cacheDir;
-            if(android.os.Build.VERSION.SDK_INT <= Build.VERSION_CODES.ECLAIR) {
+            if(android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.FROYO) {
                 File externalPath = Environment.getExternalStorageDirectory();
                 cacheDir = new File(externalPath.getAbsolutePath() +
                         "/Android/data/" + getPackageName() + "/files/" + DISK_CACHE_DIR);
@@ -326,14 +326,13 @@ public class MainActivity extends ActionBarActivity {
         }
 
         private Bitmap getBitmap(String url) throws IOException {
-            if(imageCache.getBitmap(url) != null) {
-                return imageCache.getBitmap(url).getBitmap();
-            } else {
+            if(imageCache.getBitmap(url) == null) {
                 InputStream inputStream = (InputStream) new URL(url).getContent();
                 imageCache.put(url, inputStream);
                 inputStream.close();
-                return imageCache.getBitmap(url).getBitmap();
             }
+
+            return imageCache.getBitmap(url).getBitmap();
         }
     }
 

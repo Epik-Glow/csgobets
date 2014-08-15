@@ -317,14 +317,13 @@ public class MatchDetailsActivity extends ActionBarActivity {
         }
 
         private Bitmap getBitmap(String url) throws IOException {
-            if(MainActivity.imageCache.getBitmap(url) != null) {
-                return MainActivity.imageCache.getBitmap(url).getBitmap();
-            } else {
+            if(MainActivity.imageCache.getBitmap(url) == null) {
                 InputStream inputStream = (InputStream) new URL(url).getContent();
                 MainActivity.imageCache.put(url, inputStream);
                 inputStream.close();
-                return MainActivity.imageCache.getBitmap(url).getBitmap();
             }
+
+            return MainActivity.imageCache.getBitmap(url).getBitmap();
         }
     }
 
