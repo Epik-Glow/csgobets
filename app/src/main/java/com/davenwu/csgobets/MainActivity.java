@@ -9,7 +9,6 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.ActionBarActivity;
@@ -41,7 +40,6 @@ public class MainActivity extends ActionBarActivity {
     public static SimpleDiskCache imageCache;
 
     private static final int DISK_CACHE_SIZE = 1024 * 1024 * 10; // 10 MB
-    private static final String DISK_CACHE_DIR = "csgobets_images";
 
     public static final String MATCH_ID = "com.davenwu.csgobets.MATCHURL";
     public static final String MATCH_OVER = "com.davenwu.csgobets.MATCHOVER";
@@ -60,17 +58,8 @@ public class MainActivity extends ActionBarActivity {
         FragmentManager fm = getSupportFragmentManager();
         dataFragment = (MatchesRetainedFragment) fm.findFragmentByTag("data");
 
-
         try {
-            File cacheDir;
-            if(android.os.Build.VERSION.SDK_INT < Build.VERSION_CODES.FROYO) {
-                File externalPath = Environment.getExternalStorageDirectory();
-                cacheDir = new File(externalPath.getAbsolutePath() +
-                        "/Android/data/" + getPackageName() + "/files/" + DISK_CACHE_DIR);
-            } else {
-                cacheDir = getExternalFilesDir(DISK_CACHE_DIR);
-            }
-
+            File cacheDir = getFilesDir();
             imageCache = SimpleDiskCache.open(cacheDir, 1, DISK_CACHE_SIZE);
         } catch (IOException e) {
             e.printStackTrace();
@@ -135,6 +124,11 @@ public class MainActivity extends ActionBarActivity {
     public void onDestroy() {
         super.onDestroy();
         dataFragment.setMatchesArrayList(matchesArrayList);
+        try {
+            imageCache.getCache().close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void checkMatches() {

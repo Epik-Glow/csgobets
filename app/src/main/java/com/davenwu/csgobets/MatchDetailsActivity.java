@@ -61,6 +61,7 @@ public class MatchDetailsActivity extends ActionBarActivity {
             match.setMatchOver(getIntent().getBooleanExtra(MainActivity.MATCH_OVER, false));
             dataFragment.setDetailedMatch(match);
             dataFragment.setNotConnected(false);
+
             new GetMatchDetailsTask().execute(matchUrl);
         } else {
             if(dataFragment.isNotConnected()) {
@@ -158,6 +159,7 @@ public class MatchDetailsActivity extends ActionBarActivity {
 
     public void refresh() {
         showLoading();
+
         new GetMatchDetailsTask().execute(matchUrl);
         new GetStreamTask().execute(matchUrl);
     }
@@ -255,9 +257,16 @@ public class MatchDetailsActivity extends ActionBarActivity {
 
                 new GetTeamImagesTask(element).execute();
                 new GetStreamTask().execute(matchUrl);
-                new GetRedditThreadTask().execute(("http://reddit.com/r/csgobetting/search.json?q="
-                        + match.getTeamOneName() + " vs " + match.getTeamTwoName()
-                        + "&restrict_sr=true&sort=relevance&t=week").replace("(win)", "").replace(" ", "%20"));
+
+                if(match.isMatchOver()) {
+                    new GetRedditThreadTask().execute(("http://reddit.com/r/csgobetting/search.json?q=flair%3Afinished "
+                            + match.getTeamOneName() + " vs " + match.getTeamTwoName()
+                            + "&restrict_sr=true&sort=relevance&t=week").replace("(win)", "").replace(" ", "%20"));
+                } else {
+                    new GetRedditThreadTask().execute(("http://reddit.com/r/csgobetting/search.json?q=flair%3Amatch "
+                            + match.getTeamOneName() + " vs " + match.getTeamTwoName()
+                            + "&restrict_sr=true&sort=relevance&t=week").replace("(win)", "").replace(" ", "%20"));
+                }
             }
         }
     }
@@ -272,7 +281,7 @@ public class MatchDetailsActivity extends ActionBarActivity {
 
         @Override
         protected Void doInBackground(Void... voids) {
-            String teamOneAttr = element.select(".team").get(0).attr("style");
+            String teamOneAttr = element.select(".team").get(0).attr("style").replace("\\", "");
             int teamOneUrlStart = teamOneAttr.indexOf("background: url('") + 17;
             int teamOneUrlEnd = teamOneAttr.indexOf("?", teamOneUrlStart);
             String teamOneUrl;
@@ -283,7 +292,7 @@ public class MatchDetailsActivity extends ActionBarActivity {
                 teamOneUrl = teamOneAttr.substring(teamOneUrlStart);
             }
 
-            String teamTwoAttr = element.select(".team").get(1).attr("style");
+            String teamTwoAttr = element.select(".team").get(1).attr("style").replace("\\", "");
             int teamTwoUrlStart = teamTwoAttr.indexOf("background: url('") + 17;
             int teamTwoUrlEnd = teamTwoAttr.indexOf("?", teamTwoUrlStart);
             String teamTwoUrl;
