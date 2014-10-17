@@ -48,6 +48,8 @@ public class MainActivity extends ActionBarActivity {
     private MatchesAdapter matchAdapter;
     private MatchesRetainedFragment dataFragment;
 
+    private boolean checkingMatches = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -132,12 +134,14 @@ public class MainActivity extends ActionBarActivity {
     }
 
     public void checkMatches() {
-        matchesArrayList.clear();
-        matchAdapter.notifyDataSetChanged();
-        findViewById(R.id.matchesProgressBar).setVisibility(View.VISIBLE);
-        findViewById(R.id.matchesNoConnection).setVisibility(View.INVISIBLE);
+        if(!checkingMatches) {
+            new CheckMatchesTask().execute();
 
-        new CheckMatchesTask().execute();
+            matchesArrayList.clear();
+            matchAdapter.notifyDataSetChanged();
+            findViewById(R.id.matchesProgressBar).setVisibility(View.VISIBLE);
+            findViewById(R.id.matchesNoConnection).setVisibility(View.INVISIBLE);
+        }
     }
 
     public void checkMatches(View v) {
@@ -219,6 +223,8 @@ public class MainActivity extends ActionBarActivity {
 
         @Override
         protected Void doInBackground(Void... voids) {
+            checkingMatches = true;
+
             try {
                 doc = Jsoup.connect("http://csgolounge.com").get();
             } catch (IOException e) {
@@ -229,6 +235,7 @@ public class MainActivity extends ActionBarActivity {
 
         @Override
         protected void onPostExecute(Void v) {
+            checkingMatches = false;
             findViewById(R.id.matchesProgressBar).setVisibility(View.INVISIBLE);
 
             if(doc == null) {
@@ -241,22 +248,26 @@ public class MainActivity extends ActionBarActivity {
                 for(Element element : matchesElement) {
                     MainMatch match = new MainMatch();
 
-                    match.setTime(element.select(".matchheader").select(".whenm").get(0).ownText());
-                    match.setAdditionalInfo(element.select(".matchheader").select(".whenm").select("span").text());
-                    match.setEvent(element.select(".matchheader").select(".whenm").get(1).ownText());
-                    match.setTeamOneName(element.select(".match").select(".matchleft").select("a").select("div").select("div").get(2).select(".teamtext").select("b").text());
-                    match.setTeamOnePercentage(element.select(".match").select(".matchleft").select("a").select("div").get(2).select(".teamtext").select("i").first().ownText());
-                    match.setTeamTwoName(element.select(".match").select(".matchleft").select("a").select("div").get(6).select(".teamtext").select("b").text());
-                    match.setTeamTwoPercentage(element.select(".match").select(".matchleft").select("a").select("div").get(6).select(".teamtext").select("i").first().ownText());
-                    match.setMatchUrl(element.select(".match").select(".matchleft").select("a").attr("href"));
-                    match.setMatchOver(element.select(".match").hasClass("notaviable"));
-                    match.setTeamOneWin(!element.select(".team").get(0).select("img").isEmpty());
-                    match.setTeamTwoWin(!element.select(".team").get(1).select("img").isEmpty());
+                    try {
+                        match.setTime(element.select(".matchheader").select(".whenm").get(0).ownText());
+                        match.setAdditionalInfo(element.select(".matchheader").select(".whenm").select("span").text());
+                        match.setEvent(element.select(".matchheader").select(".whenm").get(1).ownText());
+                        match.setTeamOneName(element.select(".match").select(".matchleft").select("a").select("div").select("div").get(2).select(".teamtext").select("b").text());
+                        match.setTeamOnePercentage(element.select(".match").select(".matchleft").select("a").select("div").get(2).select(".teamtext").select("i").first().ownText());
+                        match.setTeamTwoName(element.select(".match").select(".matchleft").select("a").select("div").get(6).select(".teamtext").select("b").text());
+                        match.setTeamTwoPercentage(element.select(".match").select(".matchleft").select("a").select("div").get(6).select(".teamtext").select("i").first().ownText());
+                        match.setMatchUrl(element.select(".match").select(".matchleft").select("a").attr("href"));
+                        match.setMatchOver(element.select(".match").hasClass("notaviable"));
+                        match.setTeamOneWin(!element.select(".team").get(0).select("img").isEmpty());
+                        match.setTeamTwoWin(!element.select(".team").get(1).select("img").isEmpty());
 
-                    new DownloadTeamImagesTask(match).execute(element);
+                        new DownloadTeamImagesTask(match).execute(element);
 
-                    matchAdapter.add(match);
-                    matchAdapter.notifyDataSetChanged();
+                        matchAdapter.add(match);
+                        matchAdapter.notifyDataSetChanged();
+                    } catch (Exception e) {
+                        // Sloppy but gets it working correctly
+                    }
                 }
             }
         }
