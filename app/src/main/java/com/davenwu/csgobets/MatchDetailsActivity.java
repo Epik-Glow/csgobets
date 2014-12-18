@@ -236,12 +236,15 @@ public class MatchDetailsActivity extends ActionBarActivity {
                 match.setApproximateTime(element.select(".half").get(0).ownText());
                 match.setBestOf(element.select(".half").get(1).ownText());
                 match.setExactTime(element.select(".half").get(2).ownText());
-                match.setTeamOneName(element.select("#main").select("a > span > b").get(0).ownText());
-                match.setTeamOnePercentage(element.select("#main").select("a > span > i").get(0).ownText());
-                match.setTeamTwoName(element.select("#main").select("a > span > b").get(1).ownText());
-                match.setTeamTwoPercentage(element.select("#main").select("a > span > i").get(1).ownText());
-                match.setTeamOnePotentialReward(element.select(".full > .half").get(0).text().substring("Value ".length()));
-                match.setTeamTwoPotentialReward(element.select(".full > .half").get(1).text().substring("Value ".length()));
+                match.setTeamOneName(element.select("main").select("a > span > b").get(0).ownText());
+                match.setTeamOnePercentage(element.select("main").select("a > span > i").get(0).ownText());
+                match.setTeamTwoName(element.select("main").select("a > span > b").get(1).ownText());
+                match.setTeamTwoPercentage(element.select("main").select("a > span > i").get(1).ownText());
+
+                String potentialReward = element.select(".full > .half > div").get(0).ownText();
+                match.setTeamOnePotentialReward(potentialReward.substring("Value ".length(), potentialReward.lastIndexOf("for")));
+                potentialReward = element.select(".full > .half > div").get(1).ownText();
+                match.setTeamTwoPotentialReward(potentialReward.substring("Value ".length(), potentialReward.lastIndexOf("for")));
 
                 matchDetailsApproximateTime.setText(match.getApproximateTime());
                 matchDetailsBestOf.setText(match.getBestOf());

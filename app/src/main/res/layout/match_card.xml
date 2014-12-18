@@ -45,7 +45,8 @@
         android:layout_height="120dp"
         android:alpha="1.0"
         card_view:cardBackgroundColor="#bbb"
-        card_view:cardCornerRadius="4dp">
+        card_view:cardCornerRadius="1dp"
+        card_view:cardElevation="2dp">
 
         <ImageView
             android:layout_width="fill_parent"
@@ -70,7 +71,8 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="5"
                 card_view:cardBackgroundColor="#88bbbbbb"
-                card_view:cardCornerRadius="10dp">
+                card_view:cardCornerRadius="10dp"
+                card_view:cardElevation="0dp">
 
                 <RelativeLayout
                     android:layout_width="fill_parent"
@@ -124,7 +126,8 @@
                 android:layout_gravity="center"
                 android:layout_weight="1"
                 card_view:cardBackgroundColor="#88bbbbbb"
-                card_view:cardCornerRadius="4dp">
+                card_view:cardCornerRadius="4dp"
+                card_view:cardElevation="0dp">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -143,7 +146,8 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="5"
                 card_view:cardBackgroundColor="#bbbbbbbb"
-                card_view:cardCornerRadius="10dp">
+                card_view:cardCornerRadius="10dp"
+                card_view:cardElevation="0dp">
 
                 <RelativeLayout
                     android:layout_width="fill_parent"

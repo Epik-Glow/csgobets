@@ -12,6 +12,7 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -43,6 +44,7 @@ public class MainActivity extends ActionBarActivity {
 
     public static final String MATCH_ID = "com.davenwu.csgobets.MATCHURL";
     public static final String MATCH_OVER = "com.davenwu.csgobets.MATCHOVER";
+    private final String TAG = "com.davenwu.csgobets";
 
     private ArrayList<MainMatch> matchesArrayList;
     private MatchesAdapter matchAdapter;
@@ -71,7 +73,7 @@ public class MainActivity extends ActionBarActivity {
             dataFragment = new MatchesRetainedFragment();
             fm.beginTransaction().add(dataFragment, "data").commit();
 
-            matchesArrayList = new ArrayList<MainMatch>();
+            matchesArrayList = new ArrayList<>();
             dataFragment.setMatchesArrayList(matchesArrayList);
             dataFragment.setNotConnected(false);
             matchAdapter = new MatchesAdapter(this, matchesArrayList);
@@ -235,7 +237,6 @@ public class MainActivity extends ActionBarActivity {
 
         @Override
         protected void onPostExecute(Void v) {
-            checkingMatches = false;
             findViewById(R.id.matchesProgressBar).setVisibility(View.INVISIBLE);
 
             if(doc == null) {
@@ -249,27 +250,31 @@ public class MainActivity extends ActionBarActivity {
                     MainMatch match = new MainMatch();
 
                     try {
-                        match.setTime(element.select(".matchheader").select(".whenm").get(0).ownText());
-                        match.setAdditionalInfo(element.select(".matchheader").select(".whenm").select("span").text());
-                        match.setEvent(element.select(".matchheader").select(".whenm").get(1).ownText());
-                        match.setTeamOneName(element.select(".match").select(".matchleft").select("a").select("div").select("div").get(2).select(".teamtext").select("b").text());
-                        match.setTeamOnePercentage(element.select(".match").select(".matchleft").select("a").select("div").get(2).select(".teamtext").select("i").first().ownText());
-                        match.setTeamTwoName(element.select(".match").select(".matchleft").select("a").select("div").get(6).select(".teamtext").select("b").text());
-                        match.setTeamTwoPercentage(element.select(".match").select(".matchleft").select("a").select("div").get(6).select(".teamtext").select("i").first().ownText());
-                        match.setMatchUrl(element.select(".match").select(".matchleft").select("a").attr("href"));
-                        match.setMatchOver(element.select(".match").hasClass("notaviable"));
+                        match.setTime(element.select(".matchheader > .whenm").get(0).ownText());
+                        match.setAdditionalInfo(element.select(".matchheader > .whenm > span").text());
+                        match.setEvent(element.select(".matchheader > .eventm").get(0).ownText());
+                        match.setTeamOneName(element.select(".match > .matchleft > a > div").get(0).select(".teamtext > b").first().ownText());
+                        match.setTeamOnePercentage(element.select(".match > .matchleft > a > div").get(0).select(".teamtext > i").first().ownText());
+                        match.setTeamTwoName(element.select(".match > .matchleft > a > div").get(2).select(".teamtext > b").first().ownText());
+                        match.setTeamTwoPercentage(element.select(".match > .matchleft > a > div").get(2).select(".teamtext > i").first().ownText());
+                        match.setMatchUrl(element.select(".match > .matchleft > a").attr("href"));
+                        match.setMatchOver(element.select(".match").hasClass("notavailable"));
                         match.setTeamOneWin(!element.select(".team").get(0).select("img").isEmpty());
                         match.setTeamTwoWin(!element.select(".team").get(1).select("img").isEmpty());
 
                         new DownloadTeamImagesTask(match).execute(element);
 
                         matchAdapter.add(match);
-                        matchAdapter.notifyDataSetChanged();
                     } catch (Exception e) {
                         // Sloppy but gets it working correctly
+                        Log.e(TAG, "Unsuccessful parsing a match from the match list");
                     }
                 }
+
+                matchAdapter.notifyDataSetChanged();
             }
+
+            checkingMatches = false;
         }
     }
 
