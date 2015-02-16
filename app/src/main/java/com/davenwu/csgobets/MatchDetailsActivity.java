@@ -3,6 +3,7 @@ package com.davenwu.csgobets;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -368,8 +369,17 @@ public class MatchDetailsActivity extends ActionBarActivity {
                 streamButton.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://twitch.tv/" + streamUrl));
-                        startActivity(intent);
+                        // Check if user has Twitch app installed
+                        try {
+                            // Opens stream in Twitch app if they do have it installed
+                            getPackageManager().getPackageInfo("tv.twitch.android.viewer", PackageManager.GET_ACTIVITIES);
+                            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("twitch://stream/" + streamUrl));
+                            startActivity(intent);
+                        } catch (PackageManager.NameNotFoundException e) {
+                            // Fallback to opening browser to view Twitch page
+                            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://twitch.tv/" + streamUrl));
+                            startActivity(intent);
+                        }
                     }
                 });
                 streamButton.setEnabled(true);
